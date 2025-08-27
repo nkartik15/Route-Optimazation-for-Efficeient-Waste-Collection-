@@ -1,0 +1,37 @@
+
+* { box-sizing: border-box; }
+body { margin: 0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; color: #1f2937; }
+.container { display: grid; grid-template-columns: 360px 1fr; height: 100vh; }
+.sidebar { padding: 18px; border-right: 1px solid #e5e7eb; overflow-y: auto; }
+.brand { margin: 0 0 12px; font-size: 22px; display: flex; gap: 10px; align-items: center; }
+.section { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 14px; padding: 14px; margin-bottom: 12px; }
+.input-group { display: grid; grid-template-columns: 1fr; gap: 6px; margin-bottom: 10px; }
+.input-group label { font-size: 12px; color: #6b7280; }
+.input-group input { padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 10px; font-size: 14px; }
+
+.points-list { display: flex; flex-direction: column; gap: 8px; }
+.point-item { display: flex; align-items: center; justify-content: space-between; padding: 10px; border: 1px solid #e5e7eb; background: #fff; border-radius: 10px; }
+.point-item small { color: #6b7280; }
+
+.btn { cursor: pointer; border: none; border-radius: 12px; padding: 10px 12px; font-size: 14px; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 1px 0 rgba(0,0,0,0.03); }
+.btn-primary { background: #2563eb; color: white; }
+.btn-secondary { background: #10b981; color: white; }
+.btn-danger { background: #ef4444; color: white; }
+.btn-ghost { background: white; color: #374151; border: 1px solid #e5e7eb; }
+.btn.big { width: 100%; justify-content: center; padding: 14px 16px; font-size: 16px; }
+.btn:disabled { opacity: .6; cursor: not-allowed; }
+.row { display: flex; gap: 8px; margin-top: 8px; }
+
+.map-container { position: relative; }
+#map { height: 100vh; width: 100%; }
+.loading { position: absolute; top: 16px; right: 16px; background: rgba(255,255,255,.95); padding: 12px 14px; border-radius: 12px; border: 1px solid #e5e7eb; display: none; align-items: center; gap: 10px; }
+.loading .spinner { width: 18px; height: 18px; border: 3px solid #e5e7eb; border-top-color: #2563eb; border-radius: 50%; animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.checkbox { display: inline-flex; align-items: center; gap: 8px; margin-top: 8px; font-size: 14px; color: #374151; }
+
+@media (max-width: 900px) {
+  .container { grid-template-columns: 1fr; grid-auto-rows: auto 1fr; }
+  .sidebar { border-right: none; border-bottom: 1px solid #e5e7eb; }
+  #map { height: calc(100vh - 410px); }
+}
