@@ -27,7 +27,7 @@ Power the system using a regulated 5V supply or battery pack.
 🖥️ Software Workflow
 Bin Node: Measures distance → Calculates fill percentage → Sends data to Firebase.
 Backend Script: Fetches all bin data → Runs route optimization logic.
-Web Interface: Visualizes the optimized route on a city map using Google Maps API.
+Web Interface: Visualizes the optimized route on a city map using OpenStreet API.
 
 📈 Results
 Reduced total travel distance for waste collection by up to 30% in simulated routes.
