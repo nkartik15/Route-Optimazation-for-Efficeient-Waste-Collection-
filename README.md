@@ -33,3 +33,6 @@ Web Interface: Visualizes the optimized route on a city map using OpenStreet API
 Reduced total travel distance for waste collection by up to 30% in simulated routes.
 Achieved efficient scheduling with real-time updates from full bins.
 Demonstrated scalability for multiple collection zones.
+
+🔧 Hardware Simulation
+https://wokwi.com/projects/445904046399785985
