@@ -17,6 +17,7 @@ Sends notifications when bins are full or collection is due.
 
 ♻️ Resource Optimization:
 Reduces fuel usage, time, and operational cost for waste collection authorities.
+https://route-optimazation-for-efficeient-waste-collection-jow9bz68m.vercel.app/
 
 🔧 Hardware Setup
 Connect Ultrasonic Sensor to Arduino to measure the distance to waste level.
