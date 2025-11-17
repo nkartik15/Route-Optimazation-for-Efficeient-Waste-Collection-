@@ -1,43 +1,67 @@
-// State
+// =================================
+// APP STATE (NO MAP MARKERS HERE)
+// =================================
 let depot = null; // {lat, lng}
-let points = [];  // [{lat,lng}]
+let points = [];  // [{lat, lng}]
 
-const loadingEl = () => document.getElementById('loading');
-const pointsListEl = () => document.getElementById('pointsList');
+// DOM shortcuts
+const loadingEl = () => document.getElementById("loading");
+const pointsListEl = () => document.getElementById("pointsList");
 
+// =================================
+// SET DEPOT
+// =================================
 function setDepot() {
-  const lat = parseFloat(document.getElementById('depotLat').value);
-  const lng = parseFloat(document.getElementById('depotLng').value);
+  const lat = parseFloat(document.getElementById("depotLat").value);
+  const lng = parseFloat(document.getElementById("depotLng").value);
+
   if (!isFinite(lat) || !isFinite(lng)) {
-    alert('Please enter a valid depot latitude and longitude.');
+    alert("Enter valid latitude/longitude.");
     return;
   }
+
   depot = { lat, lng };
-  setDepotMarker(lat, lng);
+  setDepotMarker(lat, lng); // from map.js
 }
 
+// =================================
+// ADD COLLECTION POINT
+// =================================
 function addCollectionPoint() {
-  const lat = parseFloat(document.getElementById('pointLat').value);
-  const lng = parseFloat(document.getElementById('pointLng').value);
+  const lat = parseFloat(document.getElementById("pointLat").value);
+  const lng = parseFloat(document.getElementById("pointLng").value);
+
   if (!isFinite(lat) || !isFinite(lng)) {
-    alert('Please enter a valid point latitude and longitude.');
+    alert("Enter valid point coordinates.");
     return;
   }
+
   points.push({ lat, lng });
-  addCollectionMarker(lat, lng, points.length);
+  addCollectionMarker(lat, lng, points.length); // from map.js
   refreshPointsList();
-  document.getElementById('pointLat').value = '';
-  document.getElementById('pointLng').value = '';
+
+  document.getElementById("pointLat").value = "";
+  document.getElementById("pointLng").value = "";
 }
 
+// =================================
+// DELETE POINT
+// =================================
 function deletePoint(index) {
   points.splice(index, 1);
-  clearCollectionMarkers();
+
+  clearCollectionMarkers(); // remove all markers
+
+  // redraw
   points.forEach((p, i) => addCollectionMarker(p.lat, p.lng, i + 1));
+
   refreshPointsList();
   clearRoute();
 }
 
+// =================================
+// CLEAR ALL
+// =================================
 function clearAllPoints() {
   points = [];
   clearCollectionMarkers();
@@ -45,16 +69,21 @@ function clearAllPoints() {
   refreshPointsList();
 }
 
+// =================================
+// POINT LIST UI
+// =================================
 function refreshPointsList() {
   const el = pointsListEl();
+
   if (!points.length) {
     el.innerHTML = '<p class="muted">No points added yet</p>';
     return;
   }
-  el.innerHTML = '';
+
+  el.innerHTML = "";
   points.forEach((p, i) => {
-    const div = document.createElement('div');
-    div.className = 'point-item';
+    const div = document.createElement("div");
+    div.className = "point-item";
     div.innerHTML = `
       <div>
         <strong>Point ${i + 1}</strong><br/>
@@ -68,115 +97,142 @@ function refreshPointsList() {
   });
 }
 
+// =================================
+// OSRM FETCH HELPERS
+// =================================
 async function fetchOSRMDistanceMatrix(coords) {
-  // coords: [{lat,lng}, ...] in order [depot, ...points]
-  const locs = coords.map(c => `${c.lng},${c.lat}`).join(';');
+  const locs = coords.map((c) => `${c.lng},${c.lat}`).join(";");
+
   const url = `https://router.project-osrm.org/table/v1/driving/${locs}?annotations=distance`;
   const res = await fetch(url);
-  if (!res.ok) throw new Error('OSRM table request failed');
+
+  if (!res.ok) throw new Error("Distance matrix fetch failed");
   const data = await res.json();
-  if (!data.distances) throw new Error('No distances returned from OSRM');
-  return data.distances; // matrix in meters
+
+  if (!data.distances) throw new Error("No OSRM distance data");
+
+  return data.distances;
 }
 
-async function fetchOSRMRoute(coords, coordsOrder) {
-  // coords: [{lat,lng}, ...], coordsOrder: indices into coords array
-  const path = coordsOrder.map(i => coords[i]);
-  const locs = path.map(c => `${c.lng},${c.lat}`).join(';');
+async function fetchOSRMRoute(coords, order) {
+  const path = order.map((i) => coords[i]);
+  const locs = path.map((c) => `${c.lng},${c.lat}`).join(";");
+
   const url = `https://router.project-osrm.org/route/v1/driving/${locs}?overview=full&geometries=geojson`;
   const res = await fetch(url);
-  if (!res.ok) throw new Error('OSRM route request failed');
+
+  if (!res.ok) throw new Error("OSRM route fetch failed");
   const data = await res.json();
-  if (!data.routes || !data.routes.length) throw new Error('No route returned from OSRM');
-  return data.routes[0].geometry; // GeoJSON LineString
+
+  if (!data.routes || !data.routes.length) {
+    throw new Error("No OSRM route returned");
+  }
+
+  return data.routes[0].geometry;
 }
 
+// =================================
+// CALCULATE ROUTE
+// =================================
 async function calculateRoute() {
   if (!depot) {
-    alert('Please set the depot location first.');
+    alert("Set Depot first.");
     return;
   }
   if (!points.length) {
-    alert('Please add at least one collection point.');
+    alert("Add at least one point.");
     return;
   }
-  loadingEl().style.display = 'flex';
+
+  loadingEl().style.display = "flex";
 
   try {
-    // Build coordinates array [depot, ...points]
     const coords = [depot, ...points];
-
-    // 1) Get pairwise road distances from OSRM (OpenStreetMap-based)
     const matrix = await fetchOSRMDistanceMatrix(coords);
 
-    // 2) Build a visitation order using Dijkstra-based greedy heuristic
-    //    over the distance matrix (start at 0, the depot).
-    let order = greedyOrder(matrix, 0, document.getElementById('returnToDepot').checked);
+    let order = greedyOrder(
+      matrix,
+      0,
+      document.getElementById("returnToDepot").checked
+    );
 
-    // 3) If returning to depot, try a quick 2-opt improvement to shorten the tour
-    if (document.getElementById('returnToDepot').checked) {
+    if (document.getElementById("returnToDepot").checked) {
       order = twoOpt(matrix, order);
     }
 
-    // 4) Request the actual road polyline from OSRM and draw on the map
-    const geom = await fetchOSRMRoute(coords, order);
-    drawRoute({ type: 'Feature', geometry: geom, properties: {} });
+    const geometry = await fetchOSRMRoute(coords, order);
+
+    drawRoute({
+      type: "Feature",
+      geometry,
+      properties: {},
+    });
 
   } catch (err) {
+    alert("Route error: " + err.message);
     console.error(err);
-    alert('Failed to calculate the route: ' + err.message);
+
   } finally {
-    loadingEl().style.display = 'none';
+    loadingEl().style.display = "none";
   }
 }
 
+// =================================
+// EXAMPLE POINTS
+// =================================
 function examplePoints() {
-  // Around central Bengaluru
   points = [
     { lat: 12.980708, lng: 77.605916 },
     { lat: 12.969216, lng: 77.584795 },
     { lat: 12.961116, lng: 77.604342 },
-    { lat: 12.983550, lng: 77.581100 },
+    { lat: 12.98355, lng: 77.5811 },
   ];
+
   clearCollectionMarkers();
+
   points.forEach((p, i) => addCollectionMarker(p.lat, p.lng, i + 1));
   refreshPointsList();
 }
 
-// Expose to window
+// =================================
+// FIREBASE FETCH
+// =================================
+async function fetchBinsFromFirebase() {
+  try {
+    const res = await fetch(
+      "https://location-b2625-default-rtdb.asia-southeast1.firebasedatabase.app/smartbins.json"
+    );
+    const data = await res.json();
+
+    clearCollectionMarkers();
+    points = [];
+
+    Object.keys(data).forEach((id, index) => {
+      const bin = data[id];
+      if (!bin.latitude || !bin.longitude) return;
+
+      points.push({ lat: bin.latitude, lng: bin.longitude });
+
+      const marker = addCollectionMarker(bin.latitude, bin.longitude, index + 1);
+      marker.bindPopup(
+        `<b>${id}</b><br>Status: ${bin.full ? "FULL" : "Empty"}`
+      );
+    });
+
+    refreshPointsList();
+  } catch (err) {
+    alert("Firebase fetch failed.");
+    console.error(err);
+  }
+}
+
+// =================================
+// EXPORT TO WINDOW
+// =================================
 window.setDepot = setDepot;
 window.addCollectionPoint = addCollectionPoint;
 window.clearAllPoints = clearAllPoints;
 window.calculateRoute = calculateRoute;
 window.deletePoint = deletePoint;
 window.examplePoints = examplePoints;
-async function fetchBinsFromFirebase() {
-  try {
-    const response = await fetch(
-      "https://location-b2625-default-rtdb.asia-southeast1.firebasedatabase.app/smartbins.json"
-    );
-    const data = await response.json();
-
-    // Clear old map markers
-    clearCollectionMarkers();
-
-    // Convert Firebase data into map points
-    Object.keys(data).forEach((binId, index) => {
-      const { latitude, longitude, full } = data[binId];
-      if (latitude && longitude) {
-        const marker = addCollectionMarker(latitude, longitude, index + 1);
-        if (full) {
-          marker.bindPopup(`<b>${binId}</b><br>Status: FULL`).openPopup();
-        } else {
-          marker.bindPopup(`<b>${binId}</b><br>Status: Empty`);
-        }
-      }
-    });
-
-    console.log("✅ Fetched bin locations from Firebase:", data);
-  } catch (err) {
-    console.error("Error fetching from Firebase:", err);
-  }
-}
-setInterval(fetchBinsFromFirebase, 10000); // refresh every 10 seconds
 window.fetchBinsFromFirebase = fetchBinsFromFirebase;
