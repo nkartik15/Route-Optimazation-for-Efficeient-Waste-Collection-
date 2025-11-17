@@ -150,3 +150,33 @@ window.clearAllPoints = clearAllPoints;
 window.calculateRoute = calculateRoute;
 window.deletePoint = deletePoint;
 window.examplePoints = examplePoints;
+async function fetchBinsFromFirebase() {
+  try {
+    const response = await fetch(
+      "https://location-b2625-default-rtdb.asia-southeast1.firebasedatabase.app/smartbins.json"
+    );
+    const data = await response.json();
+
+    // Clear old map markers
+    clearCollectionMarkers();
+
+    // Convert Firebase data into map points
+    Object.keys(data).forEach((binId, index) => {
+      const { latitude, longitude, full } = data[binId];
+      if (latitude && longitude) {
+        const marker = addCollectionMarker(latitude, longitude, index + 1);
+        if (full) {
+          marker.bindPopup(`<b>${binId}</b><br>Status: FULL`).openPopup();
+        } else {
+          marker.bindPopup(`<b>${binId}</b><br>Status: Empty`);
+        }
+      }
+    });
+
+    console.log("✅ Fetched bin locations from Firebase:", data);
+  } catch (err) {
+    console.error("Error fetching from Firebase:", err);
+  }
+}
+setInterval(fetchBinsFromFirebase, 10000); // refresh every 10 seconds
+window.fetchBinsFromFirebase = fetchBinsFromFirebase;

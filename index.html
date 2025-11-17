@@ -66,9 +66,19 @@
           <input type="checkbox" id="returnToDepot" checked/> Return to depot
         </label>
       </section>
+          <!-- Live Bin Data moved into the sidebar -->
+      <section class="section">
+        <h3><i class="fas fa-cloud"></i> Live Bin Data</h3>
+        <button class="btn btn-success" onclick="fetchBinsFromFirebase()">
+          Fetch from Firebase
+        </button>
+      </section>
+
     </aside>
 
+    <!-- Full-width map on the right -->
     <main class="map-container">
+
       <div id="map"></div>
       <div class="loading" id="loading">
         <div class="spinner"></div>

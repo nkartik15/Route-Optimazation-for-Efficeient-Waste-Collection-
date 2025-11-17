@@ -34,9 +34,16 @@ function addCollectionMarker(lat, lng, idx) {
   const marker = L.marker([lat, lng], { title: 'Point ' + idx })
     .bindPopup('Point ' + idx)
     .addTo(map);
+
+  // Store marker visually
   collectionMarkers.push(marker);
+
+  // Store coordinates for route calculation
+  collectionPoints.push([lat, lng]);
+
   return marker;
 }
+
 
 function clearCollectionMarkers() {
   collectionMarkers.forEach(m => map.removeLayer(m));
